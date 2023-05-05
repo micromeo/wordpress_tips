@@ -1,9 +1,10 @@
 # wordpress_tips
 Wordpress Tips
 
-Example:
-#Disable Plugin and Theme Updates and Installs in WordPress
-bash wp-chown-root-folder-and-file.sh root root disable
+**Example**:
 
-#Enable Plugin and Theme Updates and Installs in WordPress
-bash wp-chown-root-folder-and-file.sh root root enable
+Disable Plugin and Theme Updates and Installs in WordPress
+> bash wp-chown-root-folder-and-file.sh root root disable
+
+Enable Plugin and Theme Updates and Installs in WordPress
+> bash wp-chown-root-folder-and-file.sh root root enable
