@@ -15,8 +15,6 @@ sudo chown -R $USERNAME:$GROUPNAME ./wp-admin ./wp-includes ./wp-config.php ./.h
 sudo chown -R $USERNAME:$GROUPNAME ./wp-content/plugins ./wp-content/themes ./wp-content/index.php ./wp-content/.htaccess
 
 # Task 2.1: Disable Plugin and Theme Updates and Installs in WordPress
-echo "thanhn"
-echo $DISALLOW_FILE_MODS
 if [ $DISALLOW_FILE_MODS = "disable" ] && grep -q "define('DISALLOW_FILE_MODS', true);" ./wp-config.php; then echo Code already exists; else echo "define('DISALLOW_FILE_MODS', true);" >> ./wp-config.php; fi
 
 # Task 2.2: Enable Plugin and Theme Updates and Installs in WordPress
