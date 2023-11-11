@@ -8,7 +8,7 @@ Step 1: Clone sh file
 
 Step 2: Disable/Enable Plugin and Theme
 Disable Plugin and Theme Updates and Installs in WordPress
-> bash wp-chown-root-folder-and-file.sh [root] [root] disable
+> bash wp-chown-root-folder-and-file.sh root root disable
 
 Enable Plugin and Theme Updates and Installs in WordPress
-> bash wp-chown-root-folder-and-file.sh [root] [root] enable
+> bash wp-chown-root-folder-and-file.sh owner owner enable
