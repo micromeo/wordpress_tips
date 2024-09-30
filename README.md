@@ -15,4 +15,5 @@ Enable Plugin and Theme Updates and Installs in WordPress
 
 ** Chmod file and folders **
 > find public_html/wp-includes -type f -exec chmod 400 {} \;
+> 
 > find /path/to/wordpress/ -type d -exec chmod 755 {} \;
