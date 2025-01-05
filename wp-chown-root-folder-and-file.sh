@@ -12,7 +12,9 @@ WORDPRESS=./ # The path to your wordpress folder
 # Task 1: Run the chown command with sudo
 sudo chown -R $USERNAME:$GROUPNAME ./wp-admin ./wp-includes ./wp-config.php ./.htaccess ./wp-config-sample.php ./wp-settings.php ./wp-login.php ./wp-load.php ./wp-mail.php ./xmlrpc.php ./wp-links-opml.php ./wp-trackback.php ./wp-cron.php ./wp-signup.php ./wp-activate.php ./wp-comments-post.php ./wp-blog-header.php ./index.php
 
-sudo chown -R $USERNAME:$GROUPNAME ./wp-content/plugins ./wp-content/themes ./wp-content/index.php ./wp-content/.htaccess
+sudo find ./wp-content/plugins ./wp-content/themes ./wp-content/index.php ./wp-content/.htaccess \
+  \( -path "./wp-content/plugins/all-in-one-wp-migration" -o -path "./wp-content/plugins/all-in-one-wp-migration/*" \) -prune \
+  -o -exec chown $USERNAME:$GROUPNAME {} +
 
 # Task 2.1: Disable Plugin and Theme Updates and Installs in WordPress
 if [ $DISALLOW_FILE_MODS = "disable" ] && grep -q "define('DISALLOW_FILE_MODS', true);" ./wp-config.php; then echo Code already exists; else echo "define('DISALLOW_FILE_MODS', true);" >> ./wp-config.php; fi
