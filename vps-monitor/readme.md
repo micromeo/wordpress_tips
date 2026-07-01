@@ -44,7 +44,7 @@ Thực hiện tuần tự các lệnh sau với quyền `root` qua SSH:
 
 ```bash
 # 1. Tải script trực tiếp từ GitHub về thư mục root của VPS
-curl -o /root/vps_monitor.sh [https://raw.githubusercontent.com/micromeo/wordpress_tips/main/vps-monitor/vps_monitor.sh](https://raw.githubusercontent.com/micromeo/wordpress_tips/main/vps-monitor/vps_monitor.sh)
+curl -o /root/vps_monitor.sh https://raw.githubusercontent.com/micromeo/wordpress_tips/main/vps-monitor/vps_monitor.sh
 
 # 2. Cấp quyền thực thi cho file script
 chmod +x /root/vps_monitor.sh
