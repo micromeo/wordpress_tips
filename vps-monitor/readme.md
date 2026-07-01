@@ -51,6 +51,7 @@ chmod +x /root/vps_monitor.sh
 
 # 3. Chạy script lần đầu tiên để cấu hình thông số
 sh /root/vps_monitor.sh
+```
 
 ## 3. Ảnh Demo
 ![Demo VPS Monitor](https://github.com/user-attachments/assets/b0073f92-b2cb-46e1-a1ab-5f9a52dda06b)
