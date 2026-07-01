@@ -50,4 +50,7 @@ curl -o /root/vps_monitor.sh [https://raw.githubusercontent.com/micromeo/wordpre
 chmod +x /root/vps_monitor.sh
 
 # 3. Chạy script lần đầu tiên để cấu hình thông số
-/root/vps_monitor.sh
+sh /root/vps_monitor.sh
+
+## 3. Ảnh Demo
+<img width="559" height="922" alt="Screenshot 2026-07-01 at 22 24 43" src="https://github.com/user-attachments/assets/f627e6bc-063a-42ef-b923-666242e8accd" />
