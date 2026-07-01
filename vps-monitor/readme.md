@@ -53,5 +53,4 @@ chmod +x /root/vps_monitor.sh
 sh /root/vps_monitor.sh
 
 ## 3. Ảnh Demo
-<img width="559" height="922" alt="Screenshot 2026-07-01 at 22 24 43" src="https://github.com/user-attachments/assets/b0073f92-b2cb-46e1-a1ab-5f9a52dda06b" />
-
+![Demo VPS Monitor](https://github.com/user-attachments/assets/b0073f92-b2cb-46e1-a1ab-5f9a52dda06b)
