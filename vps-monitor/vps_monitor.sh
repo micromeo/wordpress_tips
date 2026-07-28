@@ -36,6 +36,32 @@ fi
 # Load các biến cấu hình vào môi trường chạy
 source "$CONFIG_FILE"
 
+# Kiểm tra đang chạy với Bash
+if [ -z "${BASH_VERSION:-}" ]; then
+    echo "ERROR: Script phải chạy bằng bash, không dùng 'sh vps_monitor.sh'."
+    echo "Hãy chạy: bash vps_monitor.sh hoặc ./vps_monitor.sh"
+    exit 1
+fi
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
+
+check_command() {
+    if ! command -v "$1" > /dev/null 2>&1; then
+        log "ERROR: Lệnh cần thiết '$1' không tồn tại trên hệ thống."
+        exit 1
+    fi
+}
+
+check_command curl
+check_command top
+check_command awk
+check_command grep
+check_command free
+
+log "Đã load cấu hình: CPU_THRESHOLD=${CPU_THRESHOLD}, RAM_THRESHOLD=${RAM_THRESHOLD}, LOG_PATH=${LOG_PATH}"
+
 # Lấy địa chỉ IP Public của VPS để hiển thị trong báo cáo
 SERVER_IP=$(curl -s https://api.ipify.org || echo "Unknown_IP")
 HOSTNAME=$(hostname)
@@ -53,14 +79,30 @@ RAM_USED_PCT=$(( (RAM_TOTAL - RAM_AVAILABLE) * 100 / RAM_TOTAL ))
 # --- HÀM GỬI THÔNG BÁO TELEGRAM ---
 send_telegram() {
     local message="$1"
-    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+    local tmpfile="/tmp/vps_monitor_telegram_$$.txt"
+    local http_status
+
+    http_status=$(curl -s -o "$tmpfile" -w "%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
         -d "chat_id=${TELEGRAM_CHAT_ID}" \
         -d "text=${message}" \
-        -d "parse_mode=Markdown" > /dev/null
+        -d "parse_mode=Markdown")
+
+    local response_body
+    response_body=$(cat "$tmpfile" 2>/dev/null)
+    rm -f "$tmpfile"
+
+    if [ "$http_status" != "200" ]; then
+        log "ERROR: Telegram send failed HTTP=$http_status, response=${response_body}"
+        return 1
+    fi
+
+    log "INFO: Telegram gửi thành công."
+    return 0
 }
 
 # --- KIỂM TRA NẾU VƯỢT NGƯỠNG NGUY HIỂM ---
 if [ "$CPU_INT" -gt "$CPU_THRESHOLD" ] || [ "$RAM_USED_PCT" -gt "$RAM_THRESHOLD" ]; then
+    log "WARNING: Ngưỡng vượt: CPU=${CPU_INT}% (ngưỡng ${CPU_THRESHOLD}%), RAM=${RAM_USED_PCT}% (ngưỡng ${RAM_THRESHOLD}%)"
     
     # 1. Tìm tiến trình "ngốn" tài nguyên nhất
     TOP_PROCESS=$(ps -eo pid,user,%cpu,%mem,comm --sort=-%cpu | head -n 2 | tail -n 1)
@@ -151,10 +193,15 @@ EOF
     RESTART_HTTPD_STATUS=$?
 
     # --- THÔNG BÁO KẾT QUẢ RESTART ---
+    log "INFO: Restart nginx trả về ${RESTART_NGINX_STATUS}."
+    log "INFO: Restart httpd trả về ${RESTART_HTTPD_STATUS}."
     if [ $RESTART_NGINX_STATUS -eq 0 ] && [ $RESTART_HTTPD_STATUS -eq 0 ]; then
         send_telegram "✅ Tự động phục hồi THÀNH CÔNG! Nginx và Apache (httpd) đã hoạt động bình thường trở lại."
     else
+        log "ERROR: Restart service thất bại, kiểm tra lại hệ thống."
         send_telegram "❌ Tự động phục hồi THẤT BẠI hoặc có dịch vụ không thể khởi động lại. Vui lòng vào SSH kiểm tra khẩn cấp!"
     fi
 
+else
+    log "INFO: Hệ thống bình thường; CPU=${CPU_INT}% RAM=${RAM_USED_PCT}%. Không gửi Telegram."
 fi
