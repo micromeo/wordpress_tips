@@ -122,6 +122,49 @@ send_telegram() {
     return 0
 }
 
+# --- DAILY SUMMARY (SEND AT 17:00 ONCE PER DAY) ---
+SUMMARY_HHMM="1700"
+NOW_HHMM=$(date +%H%M)
+TODAY_DATE=$(date +%F)
+LAST_SUMMARY_FILE="/var/tmp/vps_monitor_last_summary_date"
+
+# Prepare TOP_IPS for summary
+if [ -f "$LOG_PATH" ]; then
+    TOP_IPS=$(tail -n 50000 "$LOG_PATH" | awk '{print $1}' | sort | uniq -c | sort -nr | head -n 10 | awk '{print "🔹 " $2 " - (Lượt gọi: " $1 ")"}')
+else
+    TOP_IPS="⚠️ Không tìm thấy file log tại đường dẫn cấu hình."
+fi
+
+IO_WAIT=$(top -bn1 | grep "Cpu(s)" | awk '{print $10}')
+LOAD_AVG=$(uptime | awk -F'load average:' '{print $2}' | sed 's/^ //')
+
+if [ "$NOW_HHMM" = "$SUMMARY_HHMM" ]; then
+    if [ -f "$LAST_SUMMARY_FILE" ] && [ "$(cat $LAST_SUMMARY_FILE)" = "$TODAY_DATE" ]; then
+        log "INFO: Daily summary already sent today."
+    else
+        TITLE="Monitoring trạng thái của VPS sử dụng trong ngày hôm nay website winevn.com"
+        TITLE_UPPER=$(echo "$TITLE" | tr '[:lower:]' '[:upper:]')
+        read -r -d '' SUMMARY_MSG << EOF
+${TITLE_UPPER}
+
+📊 HIỆU NĂNG HỆ THỐNG:
+• CPU sử dụng: ${CPU_USAGE}%
+• RAM sử dụng: ${RAM_USED_PCT}%
+• Load Average: ${LOAD_AVG}
+• Tắc nghẽn Ổ cứng (I/O Wait): ${IO_WAIT}%
+
+👥 TOP 10 IP TRUY CẬP NHIỀU NHẤT GẦN ĐÂY:
+${TOP_IPS}
+EOF
+        if send_telegram "$SUMMARY_MSG"; then
+            echo "$TODAY_DATE" > "$LAST_SUMMARY_FILE"
+            log "INFO: Daily summary sent and recorded."
+        else
+            log "ERROR: Failed to send daily summary."
+        fi
+    fi
+fi
+
 # --- KIỂM TRA NẾU VƯỢT NGƯỠNG NGUY HIỂM ---
 if [ "$CPU_INT" -gt "$CPU_THRESHOLD" ] || [ "$RAM_USED_PCT" -gt "$RAM_THRESHOLD" ]; then
     log "WARNING: Ngưỡng vượt: CPU=${CPU_INT}% (ngưỡng ${CPU_THRESHOLD}%), RAM=${RAM_USED_PCT}% (ngưỡng ${RAM_THRESHOLD}%)"
