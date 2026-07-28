@@ -81,14 +81,36 @@ send_telegram() {
     local message="$1"
     local tmpfile="/tmp/vps_monitor_telegram_$$.txt"
     local http_status
-
-    http_status=$(curl -s -o "$tmpfile" -w "%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
-        -d "chat_id=${TELEGRAM_CHAT_ID}" \
-        -d "text=${message}" \
-        -d "parse_mode=Markdown")
-
     local response_body
-    response_body=$(cat "$tmpfile" 2>/dev/null)
+
+    send_request() {
+        http_status=$(curl -s -o "$tmpfile" -w "%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            -d "text=${message}" \
+            -d "parse_mode=Markdown")
+        response_body=$(cat "$tmpfile" 2>/dev/null)
+    }
+
+    send_request
+
+    if [ "$http_status" != "200" ]; then
+        if echo "$response_body" | grep -q '"migrate_to_chat_id"'; then
+            local new_chat_id
+            new_chat_id=$(echo "$response_body" | sed -n 's/.*"migrate_to_chat_id"[[:space:]]*:[[:space:]]*\(-[0-9]\+\).*/\1/p')
+            if [ -n "$new_chat_id" ]; then
+                log "WARNING: Group chat đã nâng cấp thành supergroup. Cập nhật TELEGRAM_CHAT_ID=$new_chat_id"
+                TELEGRAM_CHAT_ID="$new_chat_id"
+                if sed -i.bak -E "s|^TELEGRAM_CHAT_ID=.*|TELEGRAM_CHAT_ID=\"${TELEGRAM_CHAT_ID}\"|" "$CONFIG_FILE"; then
+                    rm -f "${CONFIG_FILE}.bak" 2>/dev/null
+                    log "INFO: Đã cập nhật chat ID mới vào $CONFIG_FILE"
+                else
+                    log "WARNING: Không thể cập nhật $CONFIG_FILE tự động."
+                fi
+                send_request
+            fi
+        fi
+    fi
+
     rm -f "$tmpfile"
 
     if [ "$http_status" != "200" ]; then
