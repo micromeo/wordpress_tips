@@ -123,10 +123,27 @@ EOF
     send_telegram "$ALERT_MSG"
 
     # --- CƠ CHẾ TỰ PHỤC HỒI (RESTART) ---
-    send_telegram "⏳ Đang thực hiện lệnh: systemctl restart nginx httpd..."
+    send_telegram "⏳ Đang thực hiện lệnh: systemctl restart php8.1-fpm nginx httpd..."
     
-    # Thực hiện restart các dịch vụ
-    systemctl restart php7.4-fpm > /dev/null 2>&1 # Tiện tay restart luôn php-fpm vì nó thường đi chung với nghẽn web
+    # Thực hiện restart dịch vụ PHP-FPM phù hợp với phiên bản đang dùng
+    PHP_FPM_SERVICES=("php8.1-fpm" "php8.0-fpm" "php7.4-fpm" "php-fpm")
+    PHP_FPM_RESTARTED=0
+    for svc in "${PHP_FPM_SERVICES[@]}"; do
+        if systemctl list-unit-files --type=service | grep -q "^${svc}.service"; then
+            systemctl restart "$svc" > /dev/null 2>&1
+            if [ $? -eq 0 ]; then
+                send_telegram "✅ Đã restart dịch vụ PHP-FPM: ${svc}"
+                PHP_FPM_RESTARTED=1
+            else
+                send_telegram "⚠️ Không thể restart dịch vụ PHP-FPM: ${svc}"
+            fi
+            break
+        fi
+    done
+    if [ "$PHP_FPM_RESTARTED" -eq 0 ]; then
+        send_telegram "⚠️ Không tìm thấy dịch vụ PHP-FPM thích hợp trên hệ thống."
+    fi
+
     systemctl restart nginx > /dev/null 2>&1
     RESTART_NGINX_STATUS=$?
     
